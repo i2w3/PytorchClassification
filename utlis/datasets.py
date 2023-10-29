@@ -1,4 +1,3 @@
-import tqdm
 import json
 import pickle
 from PIL import Image
@@ -51,6 +50,7 @@ def changeParentPath(path, changeParentIndex, changeParentName):
 
 
 def buildChestRay2017(DatasetPath = Path("./DataSets/ChestXRay2017")):
+    """建立ChestRay2017数据集的标签字典label.json以及图像路径"""
     imgDict:dict = {}
     lblDict:dict = {}
     DatasetPath = Path.cwd() / DatasetPath
@@ -79,10 +79,10 @@ def buildChestRay2017(DatasetPath = Path("./DataSets/ChestXRay2017")):
                     lblList.append(split[1])
         imgDict[folder.name] = imgList
         lblDict[folder.name] = lblList
-    classes = set(lblDict["train"] + lblDict["valid"])
+    classes = set(lblDict["train"] + lblDict["valid"]) # 获得所有标签类型，不重复
     class_to_index = {}
     for index, class_name in enumerate(classes):
-        class_to_index[class_name] = index
+        class_to_index[class_name] = index # 标签转为索引 eg: apple = 1
     with open(DatasetPath / Path("label.json"), "w") as f:
         json.dump(class_to_index, f)
     lblDict["train"] = [class_to_index[class_name] for class_name in lblDict["train"]]

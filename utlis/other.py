@@ -94,7 +94,7 @@ def train_model(model, writer, savePath, dataloaders, device, criterion, optimiz
 
         for epoch in range(num_epochs):
             print('-' * 20)
-            print(f'Epoch {epoch + 1}/{num_epochs}')
+            print(f'Epoch {epoch}/{num_epochs - 1}')
             
             # 每个epoch执行两个阶段 train 和 valid
             for phase in ['train', 'valid']:
@@ -129,14 +129,14 @@ def train_model(model, writer, savePath, dataloaders, device, criterion, optimiz
                 epoch_loss = running_loss / datasetsSize[phase]
                 epoch_acc = running_corrects / datasetsSize[phase]
 
-                writer.add_scalar(f'Loss/{phase}', epoch_loss, epoch+1)
-                writer.add_scalar(f'Acc/{phase}', epoch_acc, epoch+1)
+                writer.add_scalar(f'Loss/{phase}', epoch_loss, epoch)
+                writer.add_scalar(f'Acc/{phase}', epoch_acc, epoch)
                 
                 print(f'{phase} Loss: {epoch_loss:.4f} Acc: {epoch_acc:.4f}')
 
                 if phase == 'valid' and scheduler is not None:
                     # 验证完再更新优化器
-                    writer.add_scalar('Learning Rate', optimizer.param_groups[0]['lr'], epoch+1)
+                    writer.add_scalar('Learning Rate', optimizer.param_groups[0]['lr'], epoch)
                     scheduler.step()
 
                 # 保存高准确率模型
