@@ -1,0 +1,126 @@
+import tqdm
+import json
+import pickle
+from PIL import Image
+from pathlib import Path
+from torch.utils.data import Dataset
+
+
+def readPickle(dataLoadPath:Path,
+               imgPickleFile = Path("dataimg.pickle"),
+               lblPickleFile = Path("datalbl.pickle")):
+    with open(dataLoadPath / imgPickleFile, "rb") as f:
+        data_img = pickle.load(f)
+    with open(dataLoadPath / lblPickleFile, "rb") as f:
+        data_lbl = pickle.load(f)
+    return data_img, data_lbl
+
+
+def savePickle(imgDict:dict,
+               lblDict:dict,
+               pickleDataPath:Path,
+               imgPickleFile = Path("dataimg.pickle"),
+               lblPickleFile = Path("datalbl.pickle")):
+    with open(pickleDataPath / imgPickleFile, "wb") as f:
+        pickle.dump(imgDict, f, pickle.HIGHEST_PROTOCOL)
+    with open(pickleDataPath / lblPickleFile, "wb") as f:
+        pickle.dump(lblDict, f, pickle.HIGHEST_PROTOCOL)
+
+
+def changeParentPath(path, changeParentIndex, changeParentName):
+    """改变path中的某个父文件夹"""
+    # eg: changeParentPath(Path("./DataSets/ChestXRay2017/train/NORMAL/IM-0115-0001.jpeg), 1, "ChestXRay2017_resize320")
+    #     ->Path("./DataSets/ChestXRay2017_resize320/train/NORMAL/IM-0115-0001.jpeg)，第 1 位的父文件夹并修改
+    rawPath = path
+    parentPathList:list = []
+    while 1:
+        parentPathList.append(rawPath.name)
+        rawPath = rawPath.parent
+
+        if rawPath.name == "":
+            break
+    newPath = Path("./")
+    for i in range(len(parentPathList) - 1):
+        index = - i - 1
+        if index == - changeParentIndex - 1:
+            newPath = newPath / Path(changeParentName)
+        else:
+            newPath = newPath / Path(parentPathList[index])
+    Path.mkdir(newPath, parents=True, exist_ok=True)
+    return newPath / Path(parentPathList[0])
+
+
+def buildChestRay2017(DatasetPath = Path("./DataSets/ChestXRay2017")):
+    imgDict:dict = {}
+    lblDict:dict = {}
+    DatasetPath = Path.cwd() / DatasetPath
+
+    folders:list = []
+    for item in DatasetPath.iterdir():
+        if item.is_dir():
+            folders.append(DatasetPath / Path(item))
+
+    # 打印所有文件夹的名称
+    for folder in folders:
+        imgList:list = []
+        lblList:list = []
+
+        subFolder:list = []
+        for item in folder.iterdir():
+            subFolder.append(folder / Path(item))
+        
+        for patientFolder in subFolder:
+            for file in patientFolder.rglob("*.jpeg"):
+                imgList.append(Path(file))
+                if patientFolder.name == "NORMAL":
+                    lblList.append("NORMAL")
+                else:
+                    split = file.name.split("_")
+                    lblList.append(split[1])
+        imgDict[folder.name] = imgList
+        lblDict[folder.name] = lblList
+    classes = set(lblDict["train"] + lblDict["valid"])
+    class_to_index = {}
+    for index, class_name in enumerate(classes):
+        class_to_index[class_name] = index
+    with open(DatasetPath / Path("label.json"), "w") as f:
+        json.dump(class_to_index, f)
+    lblDict["train"] = [class_to_index[class_name] for class_name in lblDict["train"]]
+    lblDict["valid"] = [class_to_index[class_name] for class_name in lblDict["valid"]]
+    savePickle(imgDict, lblDict, DatasetPath)
+
+
+class ChestRay2017(Dataset):
+    def __init__(self, folder:Path, transform, isTrain = True):
+        self.transfrom = transform
+
+        imgDict, lblDict = readPickle(folder)
+        if isTrain:
+            self.image = imgDict["train"]
+            self.label = lblDict["train"]
+        else:
+            self.image = imgDict["valid"]
+            self.label = lblDict["valid"]
+
+    def __getitem__(self, index):
+        image = self.image[index]
+        label = self.label[index]
+
+        imgData = Image.open(image).convert("RGB")
+        imgTensor = self.transfrom(imgData)
+
+        return imgTensor, label
+    
+    def __len__(self):
+        return len(self.label)
+
+
+if __name__ == "__main__":
+    buildChestRay2017(Path("./DataSets/ChestXRay2017_resize320"))
+    # DatasetPath = Path("./DataSets/ChestXRay2017")
+
+    # for file in DatasetPath.rglob("*.jpeg"):
+    #     image = Image.open(file)
+    #     image = image.resize((320, 320), Image.LANCZOS)
+    #     savePath = changeParentPath(file, 1, "ChestXRay2017_resize320")
+    #     image.save(savePath)

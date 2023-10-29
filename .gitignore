@@ -1,2 +1,4 @@
-./DataSets/
-./Models/hub
+DataSets
+Models/hub
+runs
+utlis/__pycache__
