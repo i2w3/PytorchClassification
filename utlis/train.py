@@ -104,8 +104,8 @@ def train(model, writer, savePath, dataloaders, device, criterion, optimizer, sc
 
         torch.save(model.state_dict(), best_model_params_path)
         best_acc = 0.0
-        iter_count = 0
         nobestCount = 0
+        iter_count = {"train":0, "valid":0}
 
         for epoch in range(num_epochs):
             print('-' * 20)
@@ -120,6 +120,7 @@ def train(model, writer, savePath, dataloaders, device, criterion, optimizer, sc
 
                 running_loss = 0.0 # 记录loss
                 running_corrects = 0 # 记录分类正确数量
+                running_total = 0
 
                 for inputs, labels in tqdm(dataloaders[phase], desc=phase):
                     optimizer.zero_grad()
@@ -138,20 +139,20 @@ def train(model, writer, savePath, dataloaders, device, criterion, optimizer, sc
                             optimizer.step()
 
                     # 统计loss和acc
-                    iter_loss = loss.item() * inputs.size(0)
-                    iter_acc = torch.sum(preds == labels.data).item()
-                    running_loss += iter_loss
-                    running_corrects += iter_acc
+                    running_loss += loss.item() * inputs.size(0)
+                    running_corrects += torch.sum(preds == labels.data).item()
+                    running_total += labels.size(0)
 
-                    writer.add_scalar(f'Iteration Loss/{phase}', iter_loss, iter_count)
-                    writer.add_scalar(f'Iteration Acc/{phase}', iter_acc, iter_count)
-                    iter_count += 1
+                    writer.add_scalars(f'Iteration/{phase}', {"Loss": running_loss/ running_total}, iter_count[phase])
+                    writer.add_scalars(f'Iteration/{phase}', {"Acc": running_corrects/ running_total}, iter_count[phase])
+
+                    iter_count[phase] += 1
                     
                 epoch_loss = running_loss / datasetsSize[phase]
                 epoch_acc = running_corrects / datasetsSize[phase]
 
-                writer.add_scalar(f'Loss/{phase}', epoch_loss, epoch)
-                writer.add_scalar(f'Acc/{phase}', epoch_acc, epoch)
+                writer.add_scalars("Epoch/Loss", {phase: epoch_loss}, epoch)
+                writer.add_scalars("Epoch/Acc", {phase: epoch_acc}, epoch)
                 print(f'{phase} Loss: {epoch_loss:.4f} Acc: {epoch_acc:.4f}')
 
                 if phase == 'valid' and scheduler is not None:
