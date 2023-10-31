@@ -104,6 +104,7 @@ def train(model, writer, savePath, dataloaders, device, criterion, optimizer, sc
 
         torch.save(model.state_dict(), best_model_params_path)
         best_acc = 0.0
+        iter_count = 0
         nobestCount = 0
 
         for epoch in range(num_epochs):
@@ -137,8 +138,14 @@ def train(model, writer, savePath, dataloaders, device, criterion, optimizer, sc
                             optimizer.step()
 
                     # 统计loss和acc
-                    running_loss += loss.item() * inputs.size(0)
-                    running_corrects += torch.sum(preds == labels.data).item()
+                    iter_loss = loss.item() * inputs.size(0)
+                    iter_acc = torch.sum(preds == labels.data).item()
+                    running_loss += iter_loss
+                    running_corrects += iter_acc
+
+                    writer.add_scalar(f'Iteration Loss/{phase}', iter_loss, iter_count)
+                    writer.add_scalar(f'Iteration Acc/{phase}', iter_acc, iter_count)
+                    iter_count += 1
                     
                 epoch_loss = running_loss / datasetsSize[phase]
                 epoch_acc = running_corrects / datasetsSize[phase]

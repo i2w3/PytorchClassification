@@ -4,7 +4,6 @@ from utlis import *
 import torch.nn as nn
 from pathlib import Path
 from torchvision import models
-# from torchsummary import summary
 from torchvision import transforms
 from torch.utils.data import DataLoader
 from torch.utils.tensorboard import SummaryWriter
@@ -74,10 +73,6 @@ print(f"本次训练将会保存在{savePath}")
 writer = SummaryWriter(log_dir=savePath)
 writer.add_graph(model, INIT_IMAGE)
 writer.add_text("Experiment Name", EXPRTIMENT)
-writer.add_text("Config/model", model.__class__.__name__)
-writer.add_text("Config/model_details", str(model))
-writer.add_text('Config/optimizer', optimizer.__class__.__name__)
-writer.add_text('Config/scheduler', scheduler.__class__.__name__)
 
 model = train(model, writer, savePath, dataloaders, DEVICE, criterion, optimizer, scheduler, EPOCHS)
 writer.close()
