@@ -3,7 +3,7 @@ import pickle
 from PIL import Image
 from pathlib import Path
 from torch.utils.data import Dataset
-
+from torchvision.datasets import DatasetFolder
 
 def readPickle(dataLoadPath:Path,
                imgPickleFile = Path("dataimg.pickle"),
@@ -80,10 +80,11 @@ def buildChestRay2017(DatasetPath = Path("./DataSets/ChestXRay2017")):
         imgDict[folder.name] = imgList
         lblDict[folder.name] = lblList
     classes = set(lblDict["train"] + lblDict["valid"]) # 获得所有标签类型，不重复
+    classes = sorted(classes) # 排一下序，保证顺序是一样的
     class_to_index = {}
     for index, class_name in enumerate(classes):
         class_to_index[class_name] = index # 标签转为索引 eg: apple = 1
-    with open(DatasetPath / Path("label.json"), "w") as f:
+    with open(DatasetPath / Path("class.json"), "w") as f:
         json.dump(class_to_index, f)
     lblDict["train"] = [class_to_index[class_name] for class_name in lblDict["train"]]
     lblDict["valid"] = [class_to_index[class_name] for class_name in lblDict["valid"]]
@@ -91,16 +92,12 @@ def buildChestRay2017(DatasetPath = Path("./DataSets/ChestXRay2017")):
 
 
 class ChestRay2017(Dataset):
-    def __init__(self, folder:Path, transform, isTrain = True):
+    def __init__(self, folder:Path, transform, isTrain = True, jsonFile="class.json"):
+        self.folder = folder
         self.transfrom = transform
-
-        imgDict, lblDict = readPickle(folder)
-        if isTrain:
-            self.image = imgDict["train"]
-            self.label = lblDict["train"]
-        else:
-            self.image = imgDict["valid"]
-            self.label = lblDict["valid"]
+        self.isTrain = isTrain
+        self.image, self.label = self.chosePickle()
+        self.class_to_idx, self.classes = self.findClasses(jsonFile=jsonFile)
 
     def __getitem__(self, index):
         image = self.image[index]
@@ -113,6 +110,26 @@ class ChestRay2017(Dataset):
     
     def __len__(self):
         return len(self.label)
+    
+    def chosePickle(self):
+        imgDict, lblDict = readPickle(self.folder)
+        if self.isTrain:
+            return imgDict["train"], lblDict["train"]
+        else:
+            return imgDict["valid"], lblDict["valid"]
+        
+    def findClasses(self, jsonFile):
+        with open(self.folder / jsonFile, 'r') as f:
+            data = json.load(f)
+        return data, list(data)
+
+    
+def ChestRay2017Binary(folder:Path, transform, isTrain=True):
+    phase = "train" if isTrain else "valid"
+    return DatasetFolder(root=folder / Path(phase), 
+                         loader=lambda file: Image.open(file).convert("RGB"),
+                         extensions="jpg", 
+                         transform=transform)
 
 
 if __name__ == "__main__":
