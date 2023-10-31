@@ -50,7 +50,7 @@ def changeParentPath(path, changeParentIndex, changeParentName):
 
 
 def buildChestRay2017(DatasetPath = Path("./DataSets/ChestXRay2017")):
-    """建立ChestRay2017数据集的标签字典label.json以及图像路径"""
+    """建立ChestRay2017数据集的标签字典class.json以及图像路径"""
     imgDict:dict = {}
     lblDict:dict = {}
     DatasetPath = Path.cwd() / DatasetPath
@@ -128,14 +128,17 @@ def ChestRay2017Binary(folder:Path, transform, isTrain=True):
     phase = "train" if isTrain else "valid"
     return DatasetFolder(root=folder / Path(phase), 
                          loader=lambda file: Image.open(file).convert("RGB"),
-                         extensions="jpg", 
+                         extensions="jpeg", 
                          transform=transform)
 
 
 if __name__ == "__main__":
-    buildChestRay2017(Path("./DataSets/ChestXRay2017_resize320"))
-    # DatasetPath = Path("./DataSets/ChestXRay2017")
+    DatasetPath = Path("./DataSets/ChestXRay2017_resize320")
 
+    # 1. 检索数据集内容，建立pickle和class.json
+    buildChestRay2017(DatasetPath)
+
+    # 2. resize图片大小
     # for file in DatasetPath.rglob("*.jpeg"):
     #     image = Image.open(file)
     #     image = image.resize((320, 320), Image.LANCZOS)
