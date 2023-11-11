@@ -1,5 +1,6 @@
 import json
 import pickle
+from typing import Any, Callable, Optional, Tuple
 from PIL import Image
 from pathlib import Path
 from torch.utils.data import Dataset
@@ -98,6 +99,7 @@ class ChestRay2017(Dataset):
         self.isTrain = isTrain
         self.image, self.label = self.chosePickle()
         self.class_to_idx, self.classes = self.findClasses(jsonFile=jsonFile)
+        self.statistics = self.statisticsClasses()
 
     def __getitem__(self, index):
         image = self.image[index]
@@ -122,14 +124,41 @@ class ChestRay2017(Dataset):
         with open(self.folder / jsonFile, 'r') as f:
             data = json.load(f)
         return data, list(data)
-
     
-def ChestRay2017Binary(folder:Path, transform, isTrain=True):
-    phase = "train" if isTrain else "valid"
-    return DatasetFolder(root=folder / Path(phase), 
+    def statisticsClasses(self):
+        idx_count = {}
+        for item in self.label:
+            if item in idx_count:
+                idx_count[item] += 1
+            else:
+                idx_count[item] = 1
+        class_count = {}
+        for idx in idx_count:
+            class_count[self.classes[idx]] = idx_count[idx]
+        return class_count
+
+
+class ChestRay2017Binary(DatasetFolder):
+    def __init__(self, folder: Path, transform, isTrain=True):
+        phase = "train" if isTrain else "valid"
+        super().__init__(root=folder / Path(phase),
                          loader=lambda file: Image.open(file).convert("RGB"),
                          extensions="jpeg", 
                          transform=transform)
+        self.statistics = self.statisticsClasses()
+        
+
+    def statisticsClasses(self):
+        idx_count = {}
+        for item in self.targets:
+            if item in idx_count:
+                idx_count[item] += 1
+            else:
+                idx_count[item] = 1
+        class_count = {}
+        for idx in idx_count:
+            class_count[self.classes[idx]] = idx_count[idx]
+        return class_count
 
 
 if __name__ == "__main__":

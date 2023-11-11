@@ -86,12 +86,13 @@ if __name__ == '__main__':
     TorchHome = Path("./Models")
     os.environ["TORCH_HOME"] = str(Path.cwd() / TorchHome)
 
-    demo()
+    # demo()
     
     weights = torchvision.models.ResNet18_Weights.IMAGENET1K_V1
     resnet18 = torchvision.models.resnet18(weights=weights)
 
-    img = torch.randint(0, 256, size=(3, 320, 320), dtype=torch.float32)
-    batch = img.unsqueeze(0)
+    weights = torchvision.models.ResNet34_Weights.IMAGENET1K_V1
+    resnet34 = torchvision.models.resnet34(weights=weights)
 
-    resnet18(batch)
+    weights = torchvision.models.DenseNet121_Weights.IMAGENET1K_V1
+    densenet121 = torchvision.models.densenet121(weights=weights)
