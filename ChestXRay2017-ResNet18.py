@@ -11,7 +11,7 @@ from torchvision.transforms import v2 as transforms
 
 
 if __name__ == "__main__":
-    os.environ["CUDA_VISIBLE_DEVICES"] = "7"
+    os.environ["CUDA_VISIBLE_DEVICES"] = "0"
 
     EXPRTIMENT = "使用预训练权重训练，有直方图均衡"
     LR = 0.01  # Learning rate
