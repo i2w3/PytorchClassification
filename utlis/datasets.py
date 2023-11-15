@@ -1,6 +1,7 @@
 import json
+import shutil
+import random
 import pickle
-from typing import Any, Callable, Optional, Tuple
 from PIL import Image
 from pathlib import Path
 from torch.utils.data import Dataset
@@ -26,6 +27,34 @@ def savePickle(imgDict:dict,
     with open(pickleDataPath / lblPickleFile, "wb") as f:
         pickle.dump(lblDict, f, pickle.HIGHEST_PROTOCOL)
 
+
+def splitData(inputPath: Path, 
+              outputPath: Path, 
+              rate: float = 0.2, 
+              extensions: list = ["jpg", "jpeg", "png"]):
+    random.seed(0)
+    # 创建文件夹
+    Path.mkdir(outputPath, exist_ok=True)
+    shutil.rmtree(outputPath)
+    train_image_path = outputPath / Path("train")
+    valid_image_path = outputPath/ Path("valid")
+    Path.mkdir(train_image_path, parents=True, exist_ok=True)
+    Path.mkdir(valid_image_path, parents=True, exist_ok=True)
+
+    imagesList: list = []
+    for suffix in extensions:
+        for file in inputPath.rglob("*." + suffix):
+            imagesList.append(file)
+
+    num = len(imagesList)
+    print(f"{inputPath}下检测到{num}张图片...")
+    valid_index = random.sample(imagesList, k=int(num * rate))
+    for single_image in imagesList:
+        if single_image in valid_index:
+            shutil.copy(single_image, valid_image_path)
+        else:
+            shutil.copy(single_image, train_image_path)
+    print("数据集划分完成")
 
 def changeParentPath(path, changeParentIndex, changeParentName):
     """改变path中的某个父文件夹"""
@@ -90,6 +119,35 @@ def buildChestRay2017(DatasetPath = Path("./DataSets/ChestXRay2017")):
     lblDict["train"] = [class_to_index[class_name] for class_name in lblDict["train"]]
     lblDict["valid"] = [class_to_index[class_name] for class_name in lblDict["valid"]]
     savePickle(imgDict, lblDict, DatasetPath)
+
+
+def buildNEC(DatasetPath = Path("./DataSets/NEC")):
+    # 0、清空
+    for phase in ["train", "valid"]:
+        Path.mkdir(DatasetPath / Path(phase), exist_ok=True)
+        shutil.rmtree(DatasetPath / Path(phase))
+    # 1、划分NONEC
+    outputPath = DatasetPath / Path("NOTNEC")
+    splitData(DatasetPath / Path("raw/对照"), outputPath)
+    for phase in ["train", "valid"]:
+        folder_path = outputPath / Path(phase)
+        savePath = DatasetPath / Path(phase) / Path("NOTNEC")
+        Path.mkdir(savePath, parents=True)
+        for suffix in ["png", "jpg"]:
+            for file in folder_path.rglob("*." + suffix):
+                shutil.move(file, savePath)
+    shutil.rmtree(outputPath)
+    # 2、划分NEC
+    outputPath = DatasetPath / Path("NEC")
+    splitData(DatasetPath / Path("raw/典型"), outputPath)
+    for phase in ["train", "valid"]:
+        folder_path = outputPath / Path(phase)
+        savePath = DatasetPath / Path(phase) / Path("NEC")
+        Path.mkdir(savePath, parents=True)
+        for suffix in ["png", "jpg"]:
+            for file in folder_path.rglob("*." + suffix):
+                shutil.move(file, savePath)
+    shutil.rmtree(outputPath)
 
 
 class ChestRay2017(Dataset):
@@ -159,13 +217,36 @@ class ChestRay2017Binary(DatasetFolder):
         for idx in idx_count:
             class_count[self.classes[idx]] = idx_count[idx]
         return class_count
+    
+
+class NECBinary(DatasetFolder):
+    def __init__(self, folder: Path, transform, isTrain=True):
+        phase = "train" if isTrain else "valid"
+        super().__init__(root=folder / Path(phase),
+                         loader=lambda file: Image.open(file).convert("RGB"),
+                         extensions=("png", "jpg"), 
+                         transform=transform)
+        self.statistics = self.statisticsClasses()
+        
+
+    def statisticsClasses(self):
+        idx_count = {}
+        for item in self.targets:
+            if item in idx_count:
+                idx_count[item] += 1
+            else:
+                idx_count[item] = 1
+        class_count = {}
+        for idx in idx_count:
+            class_count[self.classes[idx]] = idx_count[idx]
+        return class_count
 
 
 if __name__ == "__main__":
-    DatasetPath = Path("./DataSets/ChestXRay2017_resize320")
+    # DatasetPath = Path("./DataSets/ChestXRay2017_resize320")
 
     # 1. 检索数据集内容，建立pickle和class.json
-    buildChestRay2017(DatasetPath)
+    buildChestRay2017()
 
     # 2. resize图片大小
     # for file in DatasetPath.rglob("*.jpeg"):
@@ -173,3 +254,15 @@ if __name__ == "__main__":
     #     image = image.resize((320, 320), Image.LANCZOS)
     #     savePath = changeParentPath(file, 1, "ChestXRay2017_resize320")
     #     image.save(savePath)
+
+    
+    # buildNEC()
+    # DatasetPath = Path("./DataSets/NEC")
+    # for phase in ["train", "valid"]:
+    #     folder_path = DatasetPath / Path(phase)
+    #     for suffix in ["png", "jpg"]:
+    #         for file in folder_path.rglob("*." + suffix):
+    #             image = Image.open(file)
+    #             image = image.resize((320, 320), Image.Resampling.LANCZOS)
+    #             savePath = changeParentPath(file, 1, "NEC_resize320")
+    #             image.save(savePath)

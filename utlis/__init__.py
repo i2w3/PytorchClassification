@@ -1,4 +1,4 @@
-from .datasets import ChestRay2017, ChestRay2017Binary
+from .datasets import ChestRay2017, ChestRay2017Binary, NECBinary
 from .other import getClassName
-from .train import train
+from .train import train, ddptrain
 from .torchsummary import summary

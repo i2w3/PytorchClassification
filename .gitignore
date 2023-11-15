@@ -1,6 +1,9 @@
+*.jpg
+*.png
 *.jpeg
 *.pickle
 
+DataSets/NEC/raw
 Models/hub
 runs
 utlis/__pycache__
