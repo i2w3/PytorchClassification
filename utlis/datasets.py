@@ -222,13 +222,14 @@ class ChestRay2017Binary(DatasetFolder):
 class NECBinary(DatasetFolder):
     def __init__(self, folder: Path, transform, isTrain=True):
         phase = "train" if isTrain else "valid"
+        self.folder = folder
         super().__init__(root=folder / Path(phase),
                          loader=lambda file: Image.open(file).convert("RGB"),
                          extensions=("png", "jpg"), 
                          transform=transform)
         self.statistics = self.statisticsClasses()
+        self.buildClassJson()
         
-
     def statisticsClasses(self):
         idx_count = {}
         for item in self.targets:
@@ -240,6 +241,13 @@ class NECBinary(DatasetFolder):
         for idx in idx_count:
             class_count[self.classes[idx]] = idx_count[idx]
         return class_count
+
+    def buildClassJson(self):
+        class_to_index = {}
+        for index, class_name in enumerate(self.classes):
+            class_to_index[class_name] = index # 标签转为索引 eg: apple = 1
+        with open(self.folder / Path("class.json"), "w") as f:
+            json.dump(class_to_index, f)
 
 
 if __name__ == "__main__":
