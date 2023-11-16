@@ -32,7 +32,7 @@ if __name__ == "__main__":
     # 设置数据增强方法transform
     data_transforms = {'train': transforms.Compose([transforms.ToImage(),
                                                     transforms.RandomHorizontalFlip(),  # 水平翻转
-                                                    transforms.RandomRotation(10),  # 随机旋转
+                                                    # transforms.RandomRotation(10),  # 随机旋转
                                                     transforms.RandomEqualize(),
                                                     transforms.ToDtype(torch.float32, scale=True),
                                                     transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),]),
