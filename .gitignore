@@ -2,7 +2,7 @@
 *.png
 *.jpeg
 *.pickle
-
+.stignore
 DataSets/NEC/raw
 Models/hub
 runs

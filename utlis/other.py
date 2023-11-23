@@ -36,7 +36,7 @@ def getClassName(folder:Path, jsonFile = Path("label.json")):
 
 def proxy(port="7890"):
     """为git添加临时代理"""
-    os.environ["all_proxy"] = f"socks5://127.0.0.1:{port}"
+    os.environ["all_proxy"] = f"socks5://127.0.0.1:{port+1}"
     os.environ["http_proxy"] = f"http://127.0.0.1:{port}"
     os.environ["https_proxy"] = f"http://127.0.0.1:{port}"
     
