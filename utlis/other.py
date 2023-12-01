@@ -89,8 +89,20 @@ if __name__ == '__main__':
     weights = torchvision.models.ResNet18_Weights.IMAGENET1K_V1
     resnet18 = torchvision.models.resnet18(weights=weights)
 
-    weights = torchvision.models.ResNet34_Weights.IMAGENET1K_V1
-    resnet34 = torchvision.models.resnet34(weights=weights)
+    weights = torchvision.models.ResNet50_Weights.IMAGENET1K_V1
+    resnet50 = torchvision.models.resnet50(weights=weights)
+
+    weights = torchvision.models.ResNet50_Weights.IMAGENET1K_V2
+    resnet50 = torchvision.models.resnet50(weights=weights)
 
     weights = torchvision.models.DenseNet121_Weights.IMAGENET1K_V1
     densenet121 = torchvision.models.densenet121(weights=weights)
+
+    weights = torchvision.models.ViT_B_16_Weights.IMAGENET1K_V1
+    vitb16 = torchvision.models.vit_b_16(weights=weights)
+
+    weights = torchvision.models.ViT_B_16_Weights.IMAGENET1K_SWAG_E2E_V1
+    vitb16 = torchvision.models.vit_b_16(weights=weights)
+
+    weights = torchvision.models.ViT_B_16_Weights.IMAGENET1K_SWAG_LINEAR_V1
+    vitb16 = torchvision.models.vit_b_16(weights=weights)

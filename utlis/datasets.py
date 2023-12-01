@@ -157,6 +157,7 @@ class ChestRay2017(Dataset):
         self.isTrain = isTrain
         self.image, self.label = self.chosePickle()
         self.class_to_idx, self.classes = self.findClasses(jsonFile=jsonFile)
+        self.idx_to_class = {y:x for x, y in self.class_to_idx.items()}
         self.statistics = self.statisticsClasses()
 
     def __getitem__(self, index):
@@ -204,6 +205,7 @@ class ChestRay2017Binary(DatasetFolder):
                          extensions="jpeg", 
                          transform=transform)
         self.statistics = self.statisticsClasses()
+        self.idx_to_class = {y:x for x, y in self.class_to_idx.items()}
         
 
     def statisticsClasses(self):
@@ -228,6 +230,7 @@ class NECBinary(DatasetFolder):
                          extensions=("png", "jpg"), 
                          transform=transform)
         self.statistics = self.statisticsClasses()
+        self.idx_to_class = {y:x for x, y in self.class_to_idx.items()}
         self.buildClassJson()
         
     def statisticsClasses(self):
@@ -254,7 +257,7 @@ if __name__ == "__main__":
     # DatasetPath = Path("./DataSets/ChestXRay2017_resize320")
 
     # 1. 检索数据集内容，建立pickle和class.json
-    buildChestRay2017()
+    buildChestRay2017(Path("./DataSets/ChestXRay2017_resize320"))
 
     # 2. resize图片大小
     # for file in DatasetPath.rglob("*.jpeg"):

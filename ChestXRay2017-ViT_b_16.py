@@ -6,21 +6,20 @@ import torch.nn as nn
 from pathlib import Path
 from torchvision import models
 from torch.utils.data import DataLoader
-from torch.utils.tensorboard import SummaryWriter
 from torchvision.transforms import v2 as transforms
 
 
 if __name__ == "__main__":
-    os.environ["CUDA_VISIBLE_DEVICES"] = "1"
+    os.environ["CUDA_VISIBLE_DEVICES"] = "0"
 
-    EXPRTIMENT = "使用预训练权重训练，有直方图均衡"
+    EXPRTIMENT = "使用预训练权重训练，有cutmix和mixup"
     LR = 0.01  # Learning rate
     MOMENTUM = 0.9  # Momentum
     WEIGHT_DECAY = 1e-4  # Weight Decay、L2正则化
 
     EPOCHS = 50
     BATCHSIZE = 32
-    STEP_SIZE = 15
+    STEP_SIZE = 10
 
     INIT_IMAGE_SIZE = (3, 224, 224)  # 建议用dataloader里面的image来生成tensorboard的图记录
     INIT_IMAGE = torch.zeros(INIT_IMAGE_SIZE).unsqueeze(0).cuda()  # [3, 320, 320] -> [1, 3, 320, 320]
@@ -71,12 +70,7 @@ if __name__ == "__main__":
     Path.mkdir(savePath)
     print(f"本次训练将会保存在{savePath}")
 
-    writer = SummaryWriter(log_dir=savePath)
-    # writer.add_graph(model, INIT_IMAGE)
-    writer.add_text("Experiment Name", EXPRTIMENT)
-
-    model = train(model, writer, savePath, dataloaders, criterion, optimizer, scheduler, EPOCHS, breakCount=16, cm=True)
-    writer.close()
+    model = train(model, EXPRTIMENT, savePath, dataloaders, criterion, optimizer, scheduler, EPOCHS, cm=True)
 
     time_elapsed = time.time() - since
     print(f'训练完成，用时：{time_elapsed // 60:.0f}m {time_elapsed % 60:.0f}s')
