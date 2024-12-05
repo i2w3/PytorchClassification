@@ -10,7 +10,7 @@ from torchvision.transforms import v2 as transforms
 
 
 if __name__ == "__main__":
-    os.environ["CUDA_VISIBLE_DEVICES"] = "0"
+    os.environ["CUDA_VISIBLE_DEVICES"] = "1"
 
     EXPRTIMENT = "使用预训练权重训练，resnet50 有cutmix和mixup"
     LR = 0.01  # Learning rate
@@ -21,27 +21,29 @@ if __name__ == "__main__":
     BATCHSIZE = 32
     STEP_SIZE = 10
  
-    INIT_IMAGE_SIZE = (3, 320, 320)  # 建议用dataloader里面的image来生成tensorboard的图记录
+    INIT_IMAGE_SIZE = (3, 640, 640)  # 建议用dataloader里面的image来生成tensorboard的图记录
     INIT_IMAGE = torch.zeros(INIT_IMAGE_SIZE).unsqueeze(0).cuda()  # [3, 320, 320] -> [1, 3, 320, 320]
 
-    datasetPath = Path("./DataSets/ChestXRay2017_resize320")
+    datasetPath = Path("/mnt/baode/YUNJIAO/ViP/DATA/NEC")
     outputPath = Path("./runs") / datasetPath.name
     outputPath.mkdir(parents=True, exist_ok=True)
 
     # 设置数据增强方法transform
     data_transforms = {'train': transforms.Compose([transforms.ToImage(),
+                                                    transforms.Resize([448,448]),
                                                     transforms.RandomHorizontalFlip(),  # 水平翻转
                                                     transforms.RandomRotation(10),  # 随机旋转
                                                     # transforms.RandomEqualize(),
                                                     transforms.ToDtype(torch.float32, scale=True),
-                                                    transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),]),
+                                                    transforms.Normalize(mean=[0.43729363, 0.43703078, 0.43628642], std=[0.23020518, 0.23000101, 0.22991398]),]),
 
                        'valid': transforms.Compose([transforms.ToImage(),
+                                                    transforms.Resize([448,448]),
                                                     transforms.ToDtype(torch.float32, scale=True),
-                                                    transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),]),}
+                                                    transforms.Normalize(mean=[0.43729363, 0.43703078, 0.43628642], std=[0.23020518, 0.23000101, 0.22991398]),]),}
 
     # 构建dataset、dataloader，使用字典分配 trian 和 valid
-    datasets = {mode: ChestRay2017(datasetPath, data_transforms[mode], isTrain=(mode == "train"))
+    datasets = {mode: NEC(datasetPath, data_transforms[mode], isTrain=(mode == "train"))
                 for mode in ['train', 'valid']}
     dataloaders = {mode: DataLoader(datasets[mode], batch_size=BATCHSIZE, shuffle=(mode == "train"))
                 for mode in ['train', 'valid']}
@@ -75,7 +77,7 @@ if __name__ == "__main__":
     Path.mkdir(savePath)
     print(f"本次训练将会保存在{savePath}")
 
-    model = train(model, EXPRTIMENT, savePath, dataloaders, criterion, optimizer, scheduler, EPOCHS, cm=True)
+    model = train(model, EXPRTIMENT, savePath, dataloaders, criterion, optimizer, scheduler, EPOCHS, cm=False)
 
     time_elapsed = time.time() - since
     print(f'训练完成，用时：{time_elapsed // 60:.0f}m {time_elapsed % 60:.0f}s')

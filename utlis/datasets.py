@@ -253,6 +253,36 @@ class NECBinary(DatasetFolder):
             json.dump(class_to_index, f)
 
 
+class NEC(Dataset):
+    def __init__(self, folder:Path, transform, isTrain = True, jsonFile="split_NEC.json"):
+        self.folder = folder
+        self.transfrom = transform
+        self.isTrain = isTrain
+        self.jsonFile = jsonFile
+
+        with open(self.folder / self.jsonFile, "r") as file:
+            dict = json.load(file)
+        tag = "train" if self.isTrain else "test"
+        self.image = [self.folder / data[0] for data in dict[tag]]
+        self.label = [data[1] for data in dict[tag]]
+
+        self.classes = [0,1]
+        self.class_to_idx = [0,1]
+        self.statistics = 0
+
+
+    def __getitem__(self, index):
+        image = self.image[index]
+        label = self.label[index]
+
+        imgData = Image.open(image).convert("RGB")
+        imgTensor = self.transfrom(imgData)
+
+        return imgTensor, label
+    
+    def __len__(self):
+        return len(self.label)
+
 if __name__ == "__main__":
     # DatasetPath = Path("./DataSets/ChestXRay2017_resize320")
 

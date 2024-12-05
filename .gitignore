@@ -1,9 +1,4 @@
-*.jpg
-*.png
-*.jpeg
-*.pickle
-.stignore
-DataSets/NEC/raw
-Models/hub
-runs
+data
+models/hub
 utlis/__pycache__
+runs
